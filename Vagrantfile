@@ -1,5 +1,9 @@
+# vagrant plugin install landrush
+# vagrant plugin install berkshelf
+
 CHEF_VERSION = '11.8.2'
 DEFAULT_OS = 'ubuntu1204'
+DEFAULT_OS_URL = 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box'
 
 upgrade_servers = 1.times.map { |i| "up#{i}" }
 etcd_servers = 1.times.map { |i| "etcd#{i}" }
@@ -23,6 +27,7 @@ Vagrant.configure('2') do |config|
     config.vm.define upgrade_servers[index] do |node_config|
       node_config.omnibus.chef_version = CHEF_VERSION
       node_config.vm.box = DEFAULT_OS
+      node_config.vm.box_url = DEFAULT_OS_URL
       node_config.vm.hostname = "up#{index}.vagrant.dev"
       node_config.vm.provision :chef_solo do |chef|
         chef.formatter = chef_formatter
@@ -39,6 +44,7 @@ Vagrant.configure('2') do |config|
       node_config.vm.hostname = "etcd#{index}.vagrant.dev"
       node_config.omnibus.chef_version = CHEF_VERSION
       node_config.vm.box = DEFAULT_OS
+      node_config.vm.box_url = DEFAULT_OS_URL
       node_config.vm.provision :chef_solo do |chef|
         chef.formatter = chef_formatter
         chef.log_level = chef_loglevel
