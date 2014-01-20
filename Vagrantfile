@@ -23,22 +23,6 @@ Vagrant.configure('2') do |config|
   config.berkshelf.enabled = true
   config.berkshelf.berksfile_path = 'cookbooks/Berksfile'
 
-  upgrade_servers.each_index do |index|
-    config.vm.define upgrade_servers[index] do |node_config|
-      node_config.omnibus.chef_version = CHEF_VERSION
-      node_config.vm.box = DEFAULT_OS
-      node_config.vm.box_url = DEFAULT_OS_URL
-      node_config.vm.hostname = "up#{index}.vagrant.dev"
-      node_config.vm.provision :chef_solo do |chef|
-        chef.formatter = chef_formatter
-        chef.log_level = chef_loglevel
-        chef.run_list = [
-          "recipe[virgo-update-service]"
-        ]
-      end
-    end
-  end
-
   etcd_servers.each_index do |index|
     config.vm.define etcd_servers[index] do |node_config|
       node_config.vm.hostname = "etcd#{index}.vagrant.dev"
@@ -50,6 +34,22 @@ Vagrant.configure('2') do |config|
         chef.log_level = chef_loglevel
         chef.run_list = [
           "recipe[etcd]"
+        ]
+      end
+    end
+  end
+
+  upgrade_servers.each_index do |index|
+    config.vm.define upgrade_servers[index] do |node_config|
+      node_config.omnibus.chef_version = CHEF_VERSION
+      node_config.vm.box = DEFAULT_OS
+      node_config.vm.box_url = DEFAULT_OS_URL
+      node_config.vm.hostname = "up#{index}.vagrant.dev"
+      node_config.vm.provision :chef_solo do |chef|
+        chef.formatter = chef_formatter
+        chef.log_level = chef_loglevel
+        chef.run_list = [
+          "recipe[virgo-update-service]"
         ]
       end
     end
