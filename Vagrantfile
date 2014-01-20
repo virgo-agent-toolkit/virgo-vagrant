@@ -29,10 +29,4 @@ Vagrant.configure('2') do |config|
       end
     end
   end
-
-  config.vm.define :node1 do |node_config|
-    node_config.omnibus.chef_version = CHEF_VERSION
-    node_config.vm.box = DEFAULT_OS
-    node_config.vm.hostname = "node1.vagrant.dev"
-  end
 end
