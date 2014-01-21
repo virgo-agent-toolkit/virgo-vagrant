@@ -1,5 +1,6 @@
 # vagrant plugin install landrush
-# vagrant plugin install berkshelf
+# vagrant plugin install vagrant-berkshelf
+# vagrant plugin install vagrant-omnibus
 
 CHEF_VERSION = '11.8.2'
 DEFAULT_OS = 'ubuntu1204'
