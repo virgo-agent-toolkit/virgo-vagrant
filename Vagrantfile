@@ -1,5 +1,7 @@
+# requires:
 # vagrant plugin install landrush
-# vagrant plugin install berkshelf
+# vagrant plugin install vagrant-omnibus
+# vagrant plugin install vagrant-berkshelf
 
 CHEF_VERSION = '11.8.2'
 DEFAULT_VIRTUALBOX_OS = 'ubuntu1204'
