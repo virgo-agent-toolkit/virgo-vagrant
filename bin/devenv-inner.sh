@@ -26,7 +26,7 @@ init() {
   sudo usermod -a -G docker vagrant
   newgrp docker
 
-  sudo cp /vagrant/etc/default/docker.conf /etc/default/docker.conf
+  sudo cp /vagrant/vagrant/etc/default/docker.conf /etc/default/docker.conf
   sudo service restart docker
 
   if [ ! -f /usr/local/bin/shipyard-agent ] ; then
