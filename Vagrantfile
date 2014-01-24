@@ -1,70 +1,76 @@
-# requires:
-# vagrant plugin install landrush
-# vagrant plugin install vagrant-omnibus
-# vagrant plugin install vagrant-berkshelf
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
 
-CHEF_VERSION = '11.8.2'
-DEFAULT_VIRTUALBOX_OS = 'ubuntu1204'
-DEFAULT_VIRTUALBOX_OS_URL = 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box'
+BOX_NAME = ENV['BOX_NAME'] || "opscode-ubuntu-1310"
+BOX_URI = ENV['BOX_URI'] || "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-13.10_chef-provisionerless.box"
+VF_BOX_URI = ENV['BOX_URI'] || "http://opscode-vm-bento.s3.amazonaws.com/vagrant/vmware/opscode_ubuntu-13.10_chef-provisionerless.box"
+AWS_REGION = ENV['AWS_REGION']
+AWS_AMI    = ENV['AWS_AMI']
 
-DEFAULT_VMWARE_OS = 'ubuntu1204vmware'
-DEFAULT_VMWARE_OS_URL = 'http://opscode-vm-bento.s3.amazonaws.com/vagrant/vmware/opscode_ubuntu-12.04_chef-provisionerless.box'
+Vagrant::Config.run do |config|
+  # Setup virtual machine box. This VM configuration code is always executed.
+  config.vm.box = BOX_NAME
+  config.vm.box_url = BOX_URI
 
-upgrade_servers = 1.times.map { |i| "up#{i}" }
-etcd_servers = 1.times.map { |i| "etcd#{i}" }
+  # Docker Registry
+  config.vm.forward_port 5000, 15000
 
-chef_formatter = ENV.fetch("CHEF_FORMAT", "null").downcase.to_sym
-chef_loglevel = ENV.fetch("CHEF_LOG", "info").downcase.to_sym
+  # Shipyard
+  config.vm.forward_port 8005, 18005
 
-def LoadProvider(node)
-  node.vm.provider "virtualbox" do |v,o|
-    o.vm.box = DEFAULT_VIRTUALBOX_OS
-    o.vm.box_url = DEFAULT_VIRTUALBOX_OS_URL
-  end
-  node.vm.provider "vmware_fusion" do |v,o|
-    o.vm.box = DEFAULT_VMWARE_OS
-    o.vm.box_url = DEFAULT_VMWARE_OS_URL
+  #cassandra
+  config.vm.forward_port 7000, 17000
+  config.vm.forward_port 7001, 17001
+  config.vm.forward_port 7199, 17199
+  config.vm.forward_port 9160, 19160
+  config.vm.forward_port 9042, 19042
+
+  # Provision docker and new kernel if deployment was not done.
+  # It is assumed Vagrant can successfully launch the provider instance.
+  if Dir.glob("#{File.dirname(__FILE__)}/.vagrant/machines/default/*/id").empty?
+    # Add lxc-docker package
+    pkg_cmd = "wget -q -O - https://get.docker.io/gpg | apt-key add -;" \
+      "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list;" \
+      "apt-get update -qq; apt-get install -q -y --force-yes lxc-docker; "
+    pkg_cmd << "apt-get update -qq; apt-get clean"
+    config.vm.provision :shell, :inline => pkg_cmd
   end
 end
 
-Vagrant.configure('2') do |config|
-  dev_dir = ENV["VIRGO_VAGRANT_DEV"] || "#{ENV['HOME']}/Development"
 
-  config.vm.synced_folder dev_dir, "/data/dev", type: "nfs"
-  config.ssh.forward_agent = true
-
-  config.landrush.enable
-
-  config.berkshelf.enabled = true
-  config.berkshelf.berksfile_path = 'cookbooks/Berksfile'
-
-  upgrade_servers.each_index do |index|
-    config.vm.define upgrade_servers[index] do |node_config|
-      LoadProvider(node_config)
-      node_config.omnibus.chef_version = CHEF_VERSION
-      node_config.vm.hostname = "up#{index}.vagrant.dev"
-      node_config.vm.provision :chef_solo do |chef|
-        chef.formatter = chef_formatter
-        chef.log_level = chef_loglevel
-        chef.run_list = [
-          "recipe[virgo-update-service]"
-        ]
-      end
-    end
+# Providers were added on Vagrant >= 1.1.0
+Vagrant::VERSION >= "1.1.0" and Vagrant.configure("2") do |config|
+  config.vm.provider :aws do |aws, override|
+    aws.access_key_id = ENV["AWS_ACCESS_KEY_ID"]
+    aws.secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
+    aws.keypair_name = ENV["AWS_KEYPAIR_NAME"]
+    override.ssh.private_key_path = ENV["AWS_SSH_PRIVKEY"]
+    override.ssh.username = "ubuntu"
+    aws.region = AWS_REGION
+    aws.ami    = AWS_AMI
+    aws.instance_type = "m1.xlarge"
   end
 
-  etcd_servers.each_index do |index|
-    config.vm.define etcd_servers[index] do |node_config|
-      LoadProvider(node_config)
-      node_config.vm.hostname = "etcd#{index}.vagrant.dev"
-      node_config.omnibus.chef_version = CHEF_VERSION
-      node_config.vm.provision :chef_solo do |chef|
-        chef.formatter = chef_formatter
-        chef.log_level = chef_loglevel
-        chef.run_list = [
-          "recipe[etcd]"
-        ]
-      end
-    end
+  config.vm.provider :rackspace do |rs|
+    config.ssh.private_key_path = ENV["RS_PRIVATE_KEY"]
+    rs.username = ENV["RS_USERNAME"]
+    rs.api_key  = ENV["RS_API_KEY"]
+    rs.public_key_path = ENV["RS_PUBLIC_KEY"]
+    rs.flavor   = /512MB/
+    rs.image    = /Ubuntu/
+  end
+
+  config.vm.provider :vmware_fusion do |f, override|
+    override.vm.box = BOX_NAME
+    override.vm.box_url = VF_BOX_URI
+    f.vmx["memsize"] = "2048"
+    f.vmx["numvcpus"] = "2"
+  end
+
+  config.vm.provider :virtualbox do |vb|
+    config.vm.box = BOX_NAME
+    config.vm.box_url = BOX_URI
+    #memory
+    vb.customize ["modifyvm", :id, "--memory", "2048"]
   end
 end
