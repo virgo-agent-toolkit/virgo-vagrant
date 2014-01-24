@@ -33,7 +33,6 @@ Vagrant::Config.run do |config|
       "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list;" \
       "apt-get update -qq; apt-get install -q -y --force-yes lxc-docker; "
     pkg_cmd << "apt-get update -qq; apt-get clean;"
-    pkg_cmd << "/vagrant/devenv-inner.sh init;"
     config.vm.provision :shell, :inline => pkg_cmd
   end
 end
