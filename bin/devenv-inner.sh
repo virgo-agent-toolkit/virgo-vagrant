@@ -90,14 +90,10 @@ start() {
 }
 
 _update_local_images() {
-  docker build -rm -t blueflood src/blueflood/demo/docker
+  docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
 }
 
 update() {
-  apt-get update
-  apt-get install -y lxc-docker
-  cp /vagrant/vagrant/etc/docker/docker /etc/default/docker
-
   _update_local_images
 }
 
