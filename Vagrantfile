@@ -18,12 +18,14 @@ Vagrant::Config.run do |config|
   # Shipyard
   config.vm.forward_port 8005, 18005
 
-  #cassandra
+  # blueflood
   config.vm.forward_port 7000, 17000
   config.vm.forward_port 7001, 17001
   config.vm.forward_port 7199, 17199
   config.vm.forward_port 9160, 19160
   config.vm.forward_port 9042, 19042
+  config.vm.forward_port 19000, 19000
+  config.vm.forward_port 20000, 20000
 
   # Provision docker and new kernel if deployment was not done.
   # It is assumed Vagrant can successfully launch the provider instance.
