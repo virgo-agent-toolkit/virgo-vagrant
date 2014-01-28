@@ -1,7 +1,6 @@
 #/bin/bash
-set -e
 
-cd `dirname $0`/..
+cd `dirname $0`
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 APPS=${APPS:-/data/apps}
@@ -23,11 +22,11 @@ stop(){
 init() {
   sudo mkdir -p $APPS
   sudo chown vagrant:vagrant $APPS
-  sudo usermod -a -G docker vagrant
-  newgrp docker
 
-  sudo cp /vagrant/vagrant/etc/default/docker.conf /etc/default/docker.conf
-  sudo service restart docker
+  sudo service docker stop
+  sudo cp /vagrant/vagrant/etc/default/docker /etc/default/docker
+  sleep 1
+  sudo service docker start
 
   if [ ! -f /usr/local/bin/shipyard-agent ] ; then
     sudo wget https://github.com/shipyard/shipyard-agent/releases/download/v0.0.8/shipyard-agent -O /usr/local/bin/shipyard-agent
@@ -35,12 +34,11 @@ init() {
     #apikey=`shipyard-agent -url "http://127.0.0.1:8005" -register|awk '{print $5}'`
     #shipyard-agent -url "http://127.0.0.1:8005" -key $apikey &
   fi
+
+  update_local_images
 }
 
-start(){
-  mkdir -p $APPS/cassandra/data
-  mkdir -p $APPS/cassandra/logs
-
+_start_registry() {
   REGISTRY=$(docker run \
     -name internal_registry \
     -p 5000:5000 \
@@ -48,7 +46,9 @@ start(){
     samalba/docker-registry
   )
   echo "Started REGISTRY in container $REGISTRY"
+}
 
+_start_shipyard() {
   SHIPYARD=$(docker run \
     -name shipyard \
     -p 8005:8000 \
@@ -56,22 +56,9 @@ start(){
     shipyard/shipyard
   )
   echo "Started SHIPYARD in container $SHIPYARD"
+}
 
-  mkdir -p $APPS/cassandra/data
-  mkdir -p $APPS/cassandra/logs
-  CASSANDRA=$(docker run \
-    -p 7000:7000 \
-    -p 7001:7001 \
-    -p 7199:7199 \
-    -p 9160:9160 \
-    -p 9042:9042 \
-    -v $APPS/cassandra/data:/data \
-    -v $APPS/cassandra/logs:/logs \
-    -d \
-    relateiq/cassandra
-  )
-  echo "Started CASSANDRA in container $CASSANDRA"
-
+_start_etcd() {
   ETCD0=$(docker run \
     -name etcd0 \
     -p 4001:4001 \
@@ -79,22 +66,39 @@ start(){
     coreos/etcd
   )
   echo "Started ETCD0 in container $ETCD0"
+}
 
-  sleep 1
+_start_blueflood() {
+  BLUEFLOOD=$(docker run \
+    -p 7000:7000 \
+    -p 7001:7001 \
+    -p 7199:7199 \
+    -p 9160:9160 \
+    -p 9042:9042 \
+    -p 19000:19000 \
+    -p 20000:20000 \
+    -d \
+    blueflood
+  )
+  echo "Started BLUEFLOOD in container $BLUEFLOOD"
+}
+
+start() {
+  _update_local_images
+  _start_etcd
+  _start_blueflood
+}
+
+_update_local_images() {
+  docker build -rm -t blueflood src/blueflood/demo/docker
 }
 
 update() {
   apt-get update
   apt-get install -y lxc-docker
-  cp /vagrant/etc/docker.conf /etc/init/docker.conf
+  cp /vagrant/vagrant/etc/docker/docker /etc/default/docker
 
-  docker pull relateiq/cassandra
-  docker pull shipyard/shipyard
-  docker pull samalba/docker-registry
-}
-
-run_dev() {
-  docker build -t 127.0.0.1:5000/virgo-update-service src/virgo-update-service
+  _update_local_images
 }
 
 case "$1" in
