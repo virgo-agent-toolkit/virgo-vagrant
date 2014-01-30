@@ -35,7 +35,7 @@ init() {
     #shipyard-agent -url "http://127.0.0.1:8005" -key $apikey &
   fi
 
-  update_local_images
+  _update_local_images
 }
 
 _start_registry() {
