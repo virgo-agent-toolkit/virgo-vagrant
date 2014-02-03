@@ -4,7 +4,7 @@ cd `dirname $0`
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 APPS=${APPS:-/data/apps}
-PUBLIC_IP=`ifconfig eth0|grep 'inet addr:'| cut -d: -f2 | awk '{ print $1}'`
+PUBLIC_IP=`ifconfig eth1|grep 'inet addr:'| cut -d: -f2 | awk '{ print $1}'`
 
 killz(){
   echo "Killing all docker containers:"
