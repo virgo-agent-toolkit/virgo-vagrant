@@ -12,6 +12,11 @@ Vagrant::Config.run do |config|
   config.vm.box = BOX_NAME
   config.vm.box_url = BOX_URI
 
+  # Etcd
+  config.vm.forward_port 4001, 4001
+  config.vm.forward_port 4002, 4002
+  config.vm.forward_port 4003, 4003
+
   # Docker Registry
   config.vm.forward_port 5000, 15000
 

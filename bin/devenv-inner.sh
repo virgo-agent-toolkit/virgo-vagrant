@@ -4,6 +4,7 @@ cd `dirname $0`
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 APPS=${APPS:-/data/apps}
+PUBLIC_IP=`ifconfig eth0|grep 'inet addr:'| cut -d: -f2 | awk '{ print $1}'`
 
 killz(){
   echo "Killing all docker containers:"
@@ -59,13 +60,40 @@ _start_shipyard() {
 }
 
 _start_etcd() {
-  ETCD0=$(docker run \
-    -name etcd0 \
-    -p 4001:4001 \
+  ETCD1=$(docker run \
+    -name etcd-node1 \
     -d \
-    coreos/etcd
+    -p 4001:4001 \
+    -p 8001:8001 \
+    coreos/etcd \
+    -peer-addr ${PUBLIC_IP}:8001 \
+    -addr ${PUBLIC_IP}:4001
   )
-  echo "Started ETCD0 in container $ETCD0"
+  echo "Started etcd-node1 in container $ETCD1"
+
+  ETCD2=$(docker run \
+    -name etcd-node2 \
+    -d \
+    -p 4002:4002 \
+    -p 8002:8002 \
+    coreos/etcd \
+    -peer-addr ${PUBLIC_IP}:8002 \
+    -addr ${PUBLIC_IP}:4002 \
+    -peers ${PUBLIC_IP}:8001,${PUBLIC_IP}:8002,${PUBLIC_IP}:8003
+  )
+  echo "Started etcd-node2 in container $ETCD2"
+
+  ETCD3=$(docker run \
+    -name etcd-node3 \
+    -d \
+    -p 4003:4003 \
+    -p 8003:8003 \
+    coreos/etcd \
+    -peer-addr ${PUBLIC_IP}:8003 \
+    -addr ${PUBLIC_IP}:4003 \
+    -peers ${PUBLIC_IP}:8001,${PUBLIC_IP}:8002,${PUBLIC_IP}:8003
+  )
+  echo "Started etcd-node3 in container $ETCD3"
 }
 
 _start_blueflood() {
@@ -86,11 +114,12 @@ _start_blueflood() {
 start() {
   _update_local_images
   _start_etcd
-  _start_blueflood
+  #_start_blueflood
 }
 
 _update_local_images() {
-  docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
+  echo
+  #docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
 }
 
 update() {
