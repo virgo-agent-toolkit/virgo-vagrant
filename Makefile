@@ -3,7 +3,6 @@
 PUBLIC_IP=$(shell ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $$1}')
 
 all:
-	@echo usage
 
 fetch: build
 	docker pull samalba/docker-registry
@@ -28,6 +27,8 @@ blueflood:
 
 run: etcd
 	@docker ps
+
+clean: clean-images
 
 clean-images:
 	-@docker images -q | xargs docker rmi
