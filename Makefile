@@ -3,6 +3,14 @@
 PUBLIC_IP=$(shell ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $$1}')
 
 all:
+	@echo Targets:
+	@echo "      fetch"
+	@echo "      registry"
+	@echo "      build"
+	@echo "      shipyard"
+	@echo "      etcd"
+	@echo "      run"
+	@echo "      stop"
 
 fetch: build
 	docker pull samalba/docker-registry
