@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
   #  pkg_cmd << "sudo usermod -a -G docker vagrant;"
   #  config.vm.provision :shell, :inline => pkg_cmd
   #end
-  config.vm.provision :shell, :inline => 'echo DOCKER_OPTS=\"-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock -bip=10.2.0.10/16\" > /etc/default/docker'
+  config.vm.provision :shell, :inline => 'echo DOCKER_OPTS=\"-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock\" > /etc/default/docker'
   config.vm.provision :shell, :inline => '
   echo service docker restart >> /etc/rc.local
   chmod +x /etc/rc.local 2> /dev/null'
