@@ -19,7 +19,7 @@ registry:
 	docker run -name internal_registry -p 5000:5000 -d samalba/docker-registry
 
 build:
-	#docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
+	docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
 	docker build -no-cache -rm -t virgo-update-service src/virgo-update-service
 
 shipyard:
