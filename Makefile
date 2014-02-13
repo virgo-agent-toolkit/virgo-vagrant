@@ -14,16 +14,20 @@ all:
 	@echo "      stop"
 
 fetch:
-	docker pull samalba/docker-registry
+	@docker pull samalba/docker-registry
 
 registry:
-	docker run -name internal_registry -p 5000:5000 -d samalba/docker-registry
+	@docker run -name internal_registry -p 5000:5000 -d samalba/docker-registry
 
 blueflood:
-	docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
+	@docker build -no-cache -rm -t blueflood src/blueflood/demo/docker
 
-build:
-	docker build -no-cache -rm -t virgo-update-service src/virgo-update-service
+.docker-virgo-image-base:
+	-@docker rmi virgo-image-base > /dev/null
+	@docker build -no-cache -t virgo-image-base src/virgo-update-service/contrib/base-image && touch .docker-virgo-image-base
+
+build: .docker-virgo-image-base
+	docker build -rm -t virgo-update-service src/virgo-update-service
 
 shipyard:
 	@sudo wget https://github.com/shipyard/shipyard-agent/releases/download/v0.0.8/shipyard-agent -O /usr/local/bin/shipyard-agent
