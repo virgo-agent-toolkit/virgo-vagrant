@@ -16,22 +16,11 @@ Vagrant.configure("2") do |config|
 
   config.vm.network "private_network", ip: "192.168.50.4"
 
-  # Provision docker and new kernel if deployment was not done.
-  # It is assumed Vagrant can successfully launch the provider instance.
-  #if Dir.glob("#{File.dirname(__FILE__)}/.vagrant/machines/default/*/id").empty?
-  #  # Add lxc-docker package
-  #  pkg_cmd = "wget -q -O - https://get.docker.io/gpg | apt-key add -;" \
-  #    "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list;" \
-  #    "apt-get update -qq; apt-get install -q -y --force-yes lxc-docker; "
-  #  pkg_cmd << "apt-get update -qq; apt-get clean;"
-  #  pkg_cmd << "sudo usermod -a -G docker vagrant;"
-  #  config.vm.provision :shell, :inline => pkg_cmd
-  #end
-  config.vm.provision :shell, :inline => 'echo DOCKER_OPTS=\"-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock -dns=8.8.8.8\" > /etc/default/docker'
+  config.vm.provision :shell, :inline => 'echo DOCKER_OPTS=\"-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock -bip=10.2.0.10/16\" > /etc/default/docker'
   config.vm.provision :shell, :inline => '
   echo service docker restart >> /etc/rc.local
   chmod +x /etc/rc.local 2> /dev/null'
-  config.vm.provision "docker", version: "0.7.6"
+  config.vm.provision "docker", version: "0.8.0"
   config.vm.provision :shell, :inline => '/etc/rc.local'
 end
 
