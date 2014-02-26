@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :inline => '
   echo service docker restart >> /etc/rc.local
   chmod +x /etc/rc.local 2> /dev/null'
-  config.vm.provision "docker", version: "0.8.0"
+  config.vm.provision "docker", version: "0.8.1"
   config.vm.provision :shell, :inline => '/etc/rc.local'
 end
 
