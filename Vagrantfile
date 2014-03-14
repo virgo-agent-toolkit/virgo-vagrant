@@ -15,6 +15,7 @@ Vagrant.configure("2") do |config|
   config.vm.box_url = BOX_URI
 
   config.vm.network "private_network", ip: "192.168.50.4"
+  config.vm.synced_folder "./", "/vagrant/", type: "nfs"
 
   config.vm.provision :shell, :inline => 'echo DOCKER_OPTS=\"-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock -bip=10.2.0.10/16\" > /etc/default/docker'
   config.vm.provision :shell, :inline => '
